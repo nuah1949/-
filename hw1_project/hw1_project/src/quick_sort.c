@@ -1,39 +1,30 @@
 #include "sort.h"
 
-static int partition(Record *a, int lo, int hi, SortStats *stats)
-{
-    Record pivot;
-    move_record(&pivot, &a[hi], stats);
-
+static int partitionRandom(Record *a, int lo, int hi, SortStats *s) {
+    int p = lo + (int)(nextRandom() % (hi - lo + 1));
+    swap_record(&a[lo], &a[p], s);
+    Record pivot = a[lo];
+    s->moves++;
     int i = lo;
-    for (int j = lo; j < hi; ++j) {
-        /* <= is intentional for this in-place, non-stable implementation. */
-        if (compare_record(&a[j], &pivot, stats) <= 0) {
-            swap_record(&a[i], &a[j], stats);
+    for (int j = lo + 1; j <= hi; ++j) {
+        s->comparisons++;
+        if (a[j].key < pivot.key) {
             ++i;
+            swap_record(&a[i], &a[j], s);
         }
     }
-
-    swap_record(&a[i], &a[hi], stats);
+    swap_record(&a[lo], &a[i], s);
     return i;
 }
 
-static void quick_sort_range(Record *a, int lo, int hi,
-                             SortStats *stats, int depth)
-{
+static void qs(Record *a, int lo, int hi, SortStats *s, int depth) {
     if (lo >= hi) return;
-
-    if (depth > stats->max_depth) {
-        stats->max_depth = depth;
-    }
-
-    int p = partition(a, lo, hi, stats);
-    quick_sort_range(a, lo, p - 1, stats, depth + 1);
-    quick_sort_range(a, p + 1, hi, stats, depth + 1);
+    if (depth > s->maxDepth) s->maxDepth = depth;
+    int p = partitionRandom(a, lo, hi, s);
+    qs(a, lo, p - 1, s, depth + 1);
+    qs(a, p + 1, hi, s, depth + 1);
 }
 
-void quick_sort(Record *a, int n, SortStats *stats)
-{
-    if (n <= 1) return;
-    quick_sort_range(a, 0, n - 1, stats, 1);
+void quickSortRandom(Record *a, int lo, int hi, SortStats *stats) {
+    if (lo < hi) qs(a, lo, hi, stats, 1);
 }
