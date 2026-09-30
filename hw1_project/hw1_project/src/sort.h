@@ -1,6 +1,8 @@
 #ifndef SORT_H
 #define SORT_H
 
+#include <stdint.h>
+
 typedef struct {
     int key;
     int id;
@@ -9,45 +11,40 @@ typedef struct {
 typedef struct {
     long long comparisons;
     long long moves;
-    int max_depth;
+    int maxDepth;
 } SortStats;
 
-typedef void (*SortFunction)(Record *a, int n, SortStats *stats);
+typedef void (*SortFunction)(Record *, int, SortStats *);
 
-static inline void reset_stats(SortStats *stats)
-{
-    stats->comparisons = 0;
-    stats->moves = 0;
-    stats->max_depth = 0;
+static inline int compare_key(const Record *a, const Record *b, SortStats *s) {
+    s->comparisons++;
+    return (a->key > b->key) - (a->key < b->key);
 }
 
-static inline int compare_record(const Record *a, const Record *b,
-                                 SortStats *stats)
-{
-    stats->comparisons++;
-    if (a->key < b->key) return -1;
-    if (a->key > b->key) return 1;
-    return 0;
-}
-
-static inline void move_record(Record *dst, const Record *src,
-                               SortStats *stats)
-{
+static inline void move_record(Record *dst, const Record *src, SortStats *s) {
     *dst = *src;
-    stats->moves++;
+    s->moves++;
 }
 
-static inline void swap_record(Record *a, Record *b, SortStats *stats)
-{
+static inline void swap_record(Record *a, Record *b, SortStats *s) {
     if (a == b) return;
-    Record temp;
-    move_record(&temp, a, stats);
-    move_record(a, b, stats);
-    move_record(b, &temp, stats);
+    Record t = *a;
+    s->moves++;
+    *a = *b;
+    s->moves++;
+    *b = t;
+    s->moves++;
 }
 
-void insertion_sort(Record *a, int n, SortStats *stats);
-void quick_sort(Record *a, int n, SortStats *stats);
-void heap_sort(Record *a, int n, SortStats *stats);
+/* Lecture-style minstd generator used for reproducible random pivots. */
+void setSeed(int64_t seed);
+int64_t nextRandom(void);
+
+void insertionSort(Record *a, int n, SortStats *stats);
+void quickSortRandom(Record *a, int lo, int hi, SortStats *stats);
+void quickSortFirst(Record *a, int lo, int hi, SortStats *stats);
+void quickSortMiddle(Record *a, int lo, int hi, SortStats *stats);
+void quickSortMedian3(Record *a, int lo, int hi, SortStats *stats);
+void heapSort(Record *a, int n, SortStats *stats);
 
 #endif
